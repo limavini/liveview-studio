@@ -19,20 +19,29 @@ defmodule LiveViewStudioWeb.LightLive do
     <h1>Front Porch Light</h1>
     <div id="light">
       <div class="meter w-full bg-sky-200 rounded">
-        <span style={"width: #{@brightness}%"} class="bg-amber-400 p-0 h-full block">
+        <span style={"width: #{@brightness}%"} class="bg-amber-400 p-2 text-center h-full block">
           <%= @brightness %>
         </span>
       </div>
 
       <div class="flex items-center justify-center my-2 space-x-5 flex-row">
-        <button class="border rounded p-1" phx-click="off">OFF</button>
-        <button class="border rounded p-1" phx-click="down">DOWN</button>
-        <button class="border rounded p-1" phx-click="random">RANDOM</button>
-        <button class="border rounded p-1" phx-click="up">UP</button>
-        <button class="border rounded p-1" phx-click="on">ON</button>
+        <button class="border rounded p-1" phx-click="off">OFF 🌑</button>
+        <button class="border rounded p-1" phx-click="down">DOWN ⬇️</button>
+        <button class="border rounded p-1" phx-click="random">RANDOM ❓</button>
+        <button class="border rounded p-1" phx-click="up">UP ⬆️</button>
+        <button class="border rounded p-1" phx-click="on">ON 💡</button>
       </div>
+
+      <form phx-change="update">
+        <input type="range" min="0" max="100" name="brightness" value={@brightness} />
+      </form>
     </div>
     """
+  end
+
+  def handle_event("update", params, socket) do
+    socket = assign(socket, brightness: String.to_integer(params["brightness"]))
+    {:noreply, socket}
   end
 
   # handle_event
