@@ -10,9 +10,29 @@ defmodule LiveViewStudioWeb.BoatsLive do
      temporary_assigns: [boats: []]}
   end
 
+  def promo(assigns) do
+    ~H"""
+    <div>
+      <%= render_slot(@inner_block) %>
+      <div>
+        <%= render_slot(@legal) %>
+      </div>
+
+      <div>Expires in <%= @expires_in %> days</div>
+    </div>
+    """
+  end
+
   def render(assigns) do
     ~H"""
     <h1>Daily Boat Rentals</h1>
+    <.promo expires_in={2}>
+      Hurry! Limited time offer!
+      <:legal>
+        Offer valid until <%= Date.utc_today() %>
+      </:legal>
+    </.promo>
+
     <div id="boats">
       <form phx-change="filter">
         <div class="filters">
@@ -55,6 +75,13 @@ defmodule LiveViewStudioWeb.BoatsLive do
           </div>
         </div>
       </div>
+      <.promo expires_in={1}>
+        <a href="#">Contact us</a>
+        for more information.
+        <:legal>
+          Don't miss out!
+        </:legal>
+      </.promo>
     </div>
     """
   end
