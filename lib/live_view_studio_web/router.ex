@@ -23,6 +23,7 @@ defmodule LiveViewStudioWeb.Router do
     live "/sales", SalesLive
     live "/flights", FlightsLive
     live "/boats", BoatsLive
+    live "/servers", ServersLive
   end
 
   # Other scopes may use custom stacks.
