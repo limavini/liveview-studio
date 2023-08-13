@@ -10,6 +10,12 @@ defmodule LiveViewStudioWeb.DonationsLive do
   def render(assigns) do
     ~H"""
     <h1 class="text-4xl">Donations</h1>
+    <form phx-change="change-per-page">
+      <select name="per_page">
+        <%= Phoenix.HTML.Form.options_for_select([5, 10, 25, 50], @options.per_page) %>
+        <label for="per-page">Per page</label>
+      </select>
+    </form>
     <div class="table w-full border rounded-lg">
       <div class="table-header-group bg-purple-300">
         <div class="table-row">
@@ -50,7 +56,34 @@ defmodule LiveViewStudioWeb.DonationsLive do
         <% end %>
       </div>
     </div>
+    <div>
+      <.link :if={@options.page > 1} patch={~p"/donations?#{%{@options | page: @options.page - 1}}"}>
+        Previous
+      </.link>
+      <.link patch={~p"/donations?#{%{@options | page: @options.page + 1}}"}>
+        Next
+      </.link>
+    </div>
     """
+  end
+
+  def handle_event("change-per-page", %{"per_page" => per_page}, socket) do
+    options = %{socket.assigns.options | per_page: String.to_integer(per_page)}
+
+    {:noreply, push_patch(socket, to: ~p"/donations?#{options}")}
+  end
+
+  def handle_params(params, _uri, socket) do
+    sort_by = (params["sort_by"] || "id") |> String.to_atom()
+    sort_order = (params["sort_order"] || "asc") |> String.to_atom()
+    page = (params["page"] || "1") |> String.to_integer()
+    per_page = (params["per_page"] || "5") |> String.to_integer()
+
+    options = %{sort_by: sort_by, sort_order: sort_order, per_page: per_page, page: page}
+    donations = Donations.list_donations(options)
+    socket = assign(socket, donations: donations, options: options)
+
+    {:noreply, socket}
   end
 
   attr :sort_by, :atom, required: true
@@ -58,24 +91,19 @@ defmodule LiveViewStudioWeb.DonationsLive do
   slot :inner_block, required: true
 
   defp sort_link(assigns) do
+    params = %{
+      assigns.options
+      | sort_by: assigns.sort_by,
+        sort_order: next_sort_order(assigns.options.sort_order)
+    }
+
+    assigns = assign(assigns, params: params)
+
     ~H"""
-    <.link patch={
-      ~p"/donations?#{%{sort_by: @sort_by, sort_order: next_sort_order(@options.sort_order)}}"
-    }>
+    <.link patch={~p"/donations?#{@params}"}>
       <%= render_slot(@inner_block) %>
     </.link>
     """
-  end
-
-  def handle_params(params, _uri, socket) do
-    sort_by = (params["sort_by"] || "id") |> String.to_atom()
-    sort_order = (params["sort_order"] || "asc") |> String.to_atom()
-
-    options = %{sort_by: sort_by, sort_order: sort_order}
-    donations = Donations.list_donations(options)
-    socket = assign(socket, donations: donations, options: options)
-
-    {:noreply, socket}
   end
 
   defp next_sort_order(sort_order) do
