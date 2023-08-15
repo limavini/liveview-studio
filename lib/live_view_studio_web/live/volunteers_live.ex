@@ -9,6 +9,11 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   alias LiveViewStudioWeb.VolunteerFormComponent
 
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Volunteers.subscribe()
+    end
+
+    {:ok, socket}
     volunteers = Volunteers.list_volunteers()
 
     socket =
@@ -75,11 +80,8 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   def handle_event("toggle-status", %{"id" => volunteer_id}, socket) do
     volunteer = Volunteers.get_volunteer!(volunteer_id)
 
-    {:ok, volunteer} =
+    {:ok, _volunteer} =
       Volunteers.update_volunteer(volunteer, %{checked_out: !volunteer.checked_out})
-
-    # Since this volunteer already exists in the list, it updates instead of inserting
-    socket = stream_insert(socket, :volunteers, volunteer)
 
     {:noreply, socket}
   end
@@ -87,6 +89,13 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   def handle_info({:volunteer_created, volunteer}, socket) do
     socket = update(socket, :count, &(&1 + 1))
     socket = stream_insert(socket, :volunteers, volunteer, at: 0)
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:volunteer_updated, volunteer}, socket) do
+    # Since this volunteer already exists in the list, it updates instead of inserting
+    socket = stream_insert(socket, :volunteers, volunteer)
 
     {:noreply, socket}
   end

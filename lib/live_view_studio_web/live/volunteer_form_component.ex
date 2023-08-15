@@ -42,10 +42,7 @@ defmodule LiveViewStudioWeb.VolunteerFormComponent do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
 
-      {:ok, volunteer} ->
-        # Since the stream is in the parent, we cannot insert it from here.
-        # Since the parent and children are in the same process, we can send a message using self()
-        send(self(), {:volunteer_created, volunteer})
+      {:ok, _volunteer} ->
         changeset = Volunteers.change_volunteer(%Volunteer{})
 
         {:noreply, assign(socket, form: to_form(changeset))}
