@@ -9,10 +9,9 @@ defmodule LiveViewStudioWeb.VolunteersLive do
     changeset = Volunteers.change_volunteer(%Volunteer{})
 
     socket =
-      assign(socket,
-        volunteers: volunteers,
-        form: to_form(changeset)
-      )
+      socket
+      |> stream(:volunteers, volunteers)
+      |> assign(:form, to_form(changeset))
 
     {:ok, socket}
   end
@@ -30,7 +29,7 @@ defmodule LiveViewStudioWeb.VolunteersLive do
       </.form>
       <pre>
 
-    <%= inspect(@form, pretty: true)%>
+    <%!-- <%= inspect(@form, pretty: true)%> --%>
     </pre>
     </div>
 
@@ -41,8 +40,8 @@ defmodule LiveViewStudioWeb.VolunteersLive do
           <th>Phone</th>
         </tr>
       </thead>
-      <tbody>
-        <tr :for={volunteer <- @volunteers}>
+      <tbody id="volunteers" phx-update="stream">
+        <tr :for={{dom_id, volunteer} <- @streams.volunteers} id={dom_id}>
           <td><%= volunteer.name %></td>
           <td><%= volunteer.phone %></td>
         </tr>
@@ -68,7 +67,8 @@ defmodule LiveViewStudioWeb.VolunteersLive do
         {:noreply, assign(socket, form: to_form(changeset))}
 
       {:ok, volunteer} ->
-        socket = update(socket, :volunteers, fn volunteers -> [volunteer | volunteers] end)
+        # socket = update(socket, :volunteers, fn volunteers -> [volunteer | volunteers] end)
+        socket = stream_insert(socket, :volunteers, volunteer, at: 0)
         changeset = Volunteers.change_volunteer(%Volunteer{})
         {:noreply, assign(socket, form: to_form(changeset))}
     end
