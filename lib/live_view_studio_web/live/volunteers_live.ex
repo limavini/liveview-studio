@@ -10,6 +10,7 @@ defmodule LiveViewStudioWeb.VolunteersLive do
 
     socket =
       socket
+      # Use stream instead of temporary assigns when you want to modify the data
       |> stream(:volunteers, volunteers)
       |> assign(:form, to_form(changeset))
 
