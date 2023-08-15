@@ -1,5 +1,9 @@
 defmodule LiveViewStudioWeb.VolunteersLive do
   use LiveViewStudioWeb, :live_view
+  # Live Components are stateful
+
+  # Initial Render: mount -> update -> render
+  # Re-render: when assigns change -> update -> render (by itself or the parent)
 
   alias LiveViewStudio.Volunteers
   alias LiveViewStudioWeb.VolunteerFormComponent
@@ -11,8 +15,14 @@ defmodule LiveViewStudioWeb.VolunteersLive do
       socket
       # Use stream instead of temporary assigns when you want to modify the data
       |> stream(:volunteers, volunteers)
+      |> assign(:count, length(volunteers))
 
     {:ok, socket}
+  end
+
+  # Update is called when the assigns change. It does nothing here, it's just to show
+  def update(assigns, socket) do
+    {:ok, assign(socket, assigns)}
   end
 
   def render(assigns) do
@@ -20,7 +30,7 @@ defmodule LiveViewStudioWeb.VolunteersLive do
     <h1 class="text-4xl">Volunteer Check-In</h1>
 
     <div>
-      <.live_component module={VolunteerFormComponent} id={:new} />
+      <.live_component module={VolunteerFormComponent} id={:new} count={@count} />
       <%!-- <pre> --%>
       <%!-- Use it for debugging --%>
       <%!-- <%= inspect(@form, pretty: true)%> --%>
@@ -75,6 +85,7 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   end
 
   def handle_info({:volunteer_created, volunteer}, socket) do
+    socket = update(socket, :count, &(&1 + 1))
     socket = stream_insert(socket, :volunteers, volunteer, at: 0)
 
     {:noreply, socket}

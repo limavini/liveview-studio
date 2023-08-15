@@ -7,12 +7,14 @@ defmodule LiveViewStudioWeb.VolunteerFormComponent do
 
   def mount(socket) do
     changeset = Volunteers.change_volunteer(%Volunteer{})
+
     {:ok, assign(socket, form: to_form(changeset))}
   end
 
   def render(assigns) do
     ~H"""
     <div>
+      Go for it! You will be volunteer #<%= @count + 1 %>!
       <%!-- We need to add @myself because otherwise the form events will be submitted to the parent live view. --%>
       <.form for={@form} phx-submit="save" phx-change="validate" phx-target={@myself}>
         <.input field={@form[:name]} placeholder="Name" autocomplete="off" phx-debounce="2000" />
