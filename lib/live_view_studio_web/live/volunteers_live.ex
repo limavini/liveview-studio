@@ -2,17 +2,15 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   use LiveViewStudioWeb, :live_view
 
   alias LiveViewStudio.Volunteers
-  alias LiveViewStudio.Volunteers.Volunteer
+  alias LiveViewStudioWeb.VolunteerFormComponent
 
   def mount(_params, _session, socket) do
     volunteers = Volunteers.list_volunteers()
-    changeset = Volunteers.change_volunteer(%Volunteer{})
 
     socket =
       socket
       # Use stream instead of temporary assigns when you want to modify the data
       |> stream(:volunteers, volunteers)
-      |> assign(:form, to_form(changeset))
 
     {:ok, socket}
   end
@@ -21,17 +19,12 @@ defmodule LiveViewStudioWeb.VolunteersLive do
     ~H"""
     <h1 class="text-4xl">Volunteer Check-In</h1>
 
-    <div class="">
-      <.form for={@form} phx-submit="save" phx-change="validate">
-        <.input field={@form[:name]} placeholder="Name" autocomplete="off" phx-debounce="2000" />
-        <.input field={@form[:phone]} placeholder="Phone" type="tel" phx-debounce="blur" />
-
-        <.button phx-disable-with="Saving...">Submit</.button>
-      </.form>
-      <pre>
-
-    <%!-- <%= inspect(@form, pretty: true)%> --%>
-    </pre>
+    <div>
+      <.live_component module={VolunteerFormComponent} id={:new} />
+      <%!-- <pre> --%>
+      <%!-- Use it for debugging --%>
+      <%!-- <%= inspect(@form, pretty: true)%> --%>
+      <%!-- </pre> --%>
     </div>
 
     <table class="table-auto">
@@ -39,39 +32,51 @@ defmodule LiveViewStudioWeb.VolunteersLive do
         <tr>
           <th>Name</th>
           <th>Phone</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="volunteers" phx-update="stream">
-        <tr :for={{dom_id, volunteer} <- @streams.volunteers} id={dom_id}>
-          <td><%= volunteer.name %></td>
-          <td><%= volunteer.phone %></td>
-        </tr>
+        <.volunteer
+          :for={{dom_id, volunteer} <- @streams.volunteers}
+          volunteer={volunteer}
+          dom_id={dom_id}
+        />
       </tbody>
     </table>
     """
   end
 
-  def handle_event("validate", %{"volunteer" => volunteer_params}, socket) do
-    changeset =
-      %Volunteer{}
-      |> Volunteers.change_volunteer(volunteer_params)
-      |> Map.put(:action, :validate)
+  def volunteer(assigns) do
+    ~H"""
+    <tr id={@dom_id} class="border">
+      <td class={if @volunteer.checked_out, do: "text-red-500", else: "text-green-500"}>
+        <%= @volunteer.name %>
+      </td>
+      <td><%= @volunteer.phone %></td>
+      <td>
+        <button class="border rounded p-1" phx-click="toggle-status" phx-value-id={@volunteer.id}>
+          <%= if @volunteer.checked_out, do: "Check In", else: "Check Out" %>
+        </button>
+      </td>
+    </tr>
+    """
+  end
 
-    socket = update(socket, :form, fn _ -> to_form(changeset) end)
+  def handle_event("toggle-status", %{"id" => volunteer_id}, socket) do
+    volunteer = Volunteers.get_volunteer!(volunteer_id)
+
+    {:ok, volunteer} =
+      Volunteers.update_volunteer(volunteer, %{checked_out: !volunteer.checked_out})
+
+    # Since this volunteer already exists in the list, it updates instead of inserting
+    socket = stream_insert(socket, :volunteers, volunteer)
 
     {:noreply, socket}
   end
 
-  def handle_event("save", %{"volunteer" => volunteer_params}, socket) do
-    case Volunteers.create_volunteer(volunteer_params) do
-      {:error, changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+  def handle_info({:volunteer_created, volunteer}, socket) do
+    socket = stream_insert(socket, :volunteers, volunteer, at: 0)
 
-      {:ok, volunteer} ->
-        # socket = update(socket, :volunteers, fn volunteers -> [volunteer | volunteers] end)
-        socket = stream_insert(socket, :volunteers, volunteer, at: 0)
-        changeset = Volunteers.change_volunteer(%Volunteer{})
-        {:noreply, assign(socket, form: to_form(changeset))}
-    end
+    {:noreply, socket}
   end
 end
