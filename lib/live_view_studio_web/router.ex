@@ -39,6 +39,7 @@ defmodule LiveViewStudioWeb.Router do
     live_session :authenticated,
       on_mount: {LiveViewStudioWeb.UserAuth, :ensure_authenticated} do
       live "/topsecret", TopSecretLive
+      live "/presence", PresenceLive
     end
   end
 
