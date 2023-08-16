@@ -1,6 +1,7 @@
 defmodule LiveViewStudioWeb.Router do
   use LiveViewStudioWeb, :router
 
+  # Read more on https://online.pragmaticstudio.com/courses/liveview-2ed-pro/steps/42
   import LiveViewStudioWeb.UserAuth
 
   pipeline :browser do
@@ -34,7 +35,11 @@ defmodule LiveViewStudioWeb.Router do
   scope "/", LiveViewStudioWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    live "/topsecret", TopSecretLive
+    # We use live sessions to group liveviews that requires the same authentication policies
+    live_session :authenticated,
+      on_mount: {LiveViewStudioWeb.UserAuth, :ensure_authenticated} do
+      live "/topsecret", TopSecretLive
+    end
   end
 
   # Other scopes may use custom stacks.

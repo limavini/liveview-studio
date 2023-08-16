@@ -1,9 +1,6 @@
 defmodule LiveViewStudioWeb.TopSecretLive do
   use LiveViewStudioWeb, :live_view
 
-  # Read more on https://online.pragmaticstudio.com/courses/liveview-2ed-pro/steps/42
-  on_mount {LiveViewStudioWeb.UserAuth, :ensure_authenticated}
-
   def mount(_params, _session, socket) do
     {:ok, socket}
   end
