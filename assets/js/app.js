@@ -21,10 +21,12 @@ import "phoenix_html";
 import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 import topbar from "../vendor/topbar";
+// Add using `npm install --prefix assets --save <lib name>
 import flatpickr from "flatpickr";
 
 const hooks = {};
 
+// Calendar is the name of the hook in `phx-hook`
 hooks.Calendar = {
   mounted() {
     this.pickr = flatpickr(this.el, {
@@ -34,9 +36,19 @@ hooks.Calendar = {
       onChange: (selectedDates) => {
         if (selectedDates.length != 2) return;
 
+        // Send event to live view process
         this.pushEvent("dates-picked", selectedDates);
       },
-      disable: JSON.parse(this.el.dataset.unavailableDates),
+    });
+
+    // Handle events from the server
+    this.handleEvent("add-unavailable-dates", (dates) => {
+      this.pickr.set("disable", [dates, ...this.pickr.config.disable]);
+    });
+
+    // Sends message to server and waits for reply
+    this.pushEvent("unavailable-dates", {}, (reply, ref) => {
+      this.pickr.set("disable", reply.dates);
     });
   },
 

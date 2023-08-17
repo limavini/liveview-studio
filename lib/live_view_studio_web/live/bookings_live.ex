@@ -16,13 +16,11 @@ defmodule LiveViewStudioWeb.BookingsLive do
     ~H"""
     <h1>Bookings</h1>
     <div id="bookings">
+      <%!-- Adding phx-update ignore otherwise the content will be lost upon refresh --%>
+      <%!-- data-<name> is sent to the client  and retrieved using dataset --%>
+      <%!-- or we can 'ask' the data from the client (how's currently done) --%>
       <div id="wrapper" phx-update="ignore">
-        <div
-          id="booking-calendar"
-          phx-hook="Calendar"
-          data-unavailable-dates={Jason.encode!(@bookings)}
-        >
-        </div>
+        <div id="booking-calendar" phx-hook="Calendar"></div>
       </div>
       <div :if={@selected_dates} class="details">
         <div>
@@ -59,8 +57,15 @@ defmodule LiveViewStudioWeb.BookingsLive do
       socket
       |> assign(:bookings, [selected_dates | bookings])
       |> assign(:selected_dates, nil)
+      # Send events to client
+      |> push_event("add-unavailable-dates", selected_dates)
 
     {:noreply, socket}
+  end
+
+  # Handles client call and answers with data
+  def handle_event("unavailable-dates", _, socket) do
+    {:reply, %{dates: socket.assigns.bookings}, socket}
   end
 
   def format_date(date) do
