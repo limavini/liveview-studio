@@ -30,6 +30,7 @@ defmodule LiveViewStudioWeb.Router do
     live "/servers", ServersLive
     live "/donations", DonationsLive
     live "/volunteers", VolunteersLive
+    live "/shop", ShopLive
   end
 
   scope "/", LiveViewStudioWeb do
