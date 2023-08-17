@@ -9,7 +9,6 @@ defmodule LiveViewStudioWeb.LightLive do
       socket
       |> assign(brightness: brightness)
 
-    IO.inspect(socket)
     {:ok, socket}
   end
 
@@ -17,7 +16,7 @@ defmodule LiveViewStudioWeb.LightLive do
   def render(assigns) do
     ~H"""
     <h1>Front Porch Light</h1>
-    <div id="light">
+    <div id="light" phx-window-keyup="update-temp">
       <div class="meter w-full bg-sky-200 rounded">
         <span style={"width: #{@brightness}%"} class="bg-amber-400 p-2 text-center h-full block">
           <%= @brightness %>
@@ -37,6 +36,20 @@ defmodule LiveViewStudioWeb.LightLive do
       </form>
     </div>
     """
+  end
+
+  def handle_event("update-temp", %{"key" => "ArrowUp"}, socket) do
+    socket = update(socket, :brightness, &min(&1 + 10, 100))
+    {:noreply, socket}
+  end
+
+  def handle_event("update-temp", %{"key" => "ArrowDown"}, socket) do
+    socket = update(socket, :brightness, &max(&1 - 10, 0))
+    {:noreply, socket}
+  end
+
+  def handle_event("update-temp", _, socket) do
+    {:noreply, socket}
   end
 
   def handle_event("update", params, socket) do
